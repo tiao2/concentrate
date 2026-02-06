@@ -986,5 +986,54 @@
         // 启动应用
         window.addEventListener('load', initApp);
     </script>
+    <script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js')
+      .then(registration => {
+        console.log('Service Worker 注册成功:', registration.scope);
+        
+        // 检查更新
+        registration.addEventListener('updatefound', () => {
+          const newWorker = registration.installing;
+          console.log('发现 Service Worker 更新');
+          
+          newWorker.addEventListener('statechange', () => {
+            if (newWorker.state === 'installed') {
+              if (navigator.serviceWorker.controller) {
+                // 新版本已就绪，提示用户更新
+                showUpdateNotification();
+              }
+            }
+          });
+        });
+      })
+      .catch(error => {
+        console.log('Service Worker 注册失败:', error);
+      });
+  });
+  
+  // 监听 Service Worker 消息
+  navigator.serviceWorker.addEventListener('message', event => {
+    console.log('收到 Service Worker 消息:', event.data);
+  });
+  
+  // 定期检查 Service Worker 更新
+  setInterval(() => {
+    navigator.serviceWorker.getRegistrations().then(registrations => {
+      registrations.forEach(registration => {
+        registration.update();
+      });
+    });
+  }, 60 * 60 * 1000); // 每小时检查一次
+}
+
+// 显示更新通知
+function showUpdateNotification() {
+  if (confirm('发现新版本，是否立即更新？')) {
+    window.location.reload();
+  }
+}
+    </script>
 </body>
 </html>
